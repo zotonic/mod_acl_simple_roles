@@ -29,27 +29,11 @@
             </div>
         </div>
 
-        <div class="form-group">
-            <label class="control-label" for="id_acl_visible_for">{_ Maximum visibility _}</label>
-            <div>
-                <select class="form-control" id="acl_visible_for" name="acl_visible_for">
-                    <option value="0"
-                        {% ifequal 0 acl.visible_for %}selected="selected"
-                        {% endifequal %}>{_ The whole world _}</option>
-                    <option value="1"
-                        {% ifequal 1 acl.visible_for %}selected="selected"
-                        {% endifequal %}>{_ Community members _}</option>
-                    <option value="2" {% ifequal 2 acl.visible_for %}selected="selected"{% endifequal %}>{_ Group members _}</option>
-                </select>
-                <span class="help-block">{_ (users can’t change visibility to higher level than this) _}</span>
-            </div>
-        </div>
-    
         <hr/>
-    
+
         <div class="row">
             <div class="col-lg-6 col-md-6">
-                <h4>{_ Allow editing of category _}</h4> 
+                <h4>{_ Allow editing of category _}</h4>
                 {% for c in m.category.tree_flat_meta %}
                     {% with c.id as cat_id %}
                         <div class="checkbox">
@@ -58,7 +42,7 @@
                     {% endwith %}
                 {% endfor %}
             </div>
-        
+
             <div class="col-lg-6 col-md-6">
                 <h4>{_ Manage modules _}</h4>
 
@@ -151,4 +135,3 @@
     </div>
 </div>
 {% endwith %}
-

@@ -255,7 +255,7 @@ logon(UserId, Context) ->
 can_view(Id, Context) ->
     case can_view_all(Context) == true
         orelse can_edit(Id, Context) == true
-        orelse is_view_community(Id, Context) == true of
+        orelse is_view_public(Id, Context) of
         true -> true;
         false -> undefined
     end.
