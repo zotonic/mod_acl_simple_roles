@@ -9,9 +9,9 @@
 %% Licensed under the Apache License, Version 2.0 (the "License");
 %% you may not use this file except in compliance with the License.
 %% You may obtain a copy of the License at
-%% 
+%%
 %%     http://www.apache.org/licenses/LICENSE-2.0
-%% 
+%%
 %% Unless required by applicable law or agreed to in writing, software
 %% distributed under the License is distributed on an "AS IS" BASIS,
 %% WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -59,11 +59,11 @@ observe_acl_is_allowed(#acl_is_allowed{}, #context{user_id=undefined}) ->
 % Logged on users
 observe_acl_is_allowed(#acl_is_allowed{action=view, object=Id}, Context) ->
     can_view(Id, Context);
-observe_acl_is_allowed(#acl_is_allowed{action=insert, object=#acl_media{mime=Mime, size=Size}}, Context) -> 
+observe_acl_is_allowed(#acl_is_allowed{action=insert, object=#acl_media{mime=Mime, size=Size}}, Context) ->
     can_media(Mime, Size, Context);
-observe_acl_is_allowed(#acl_is_allowed{action=insert, object=#acl_rsc{category=Cat}}, Context) -> 
+observe_acl_is_allowed(#acl_is_allowed{action=insert, object=#acl_rsc{category=Cat}}, Context) ->
     can_insert(Cat, Context);
-observe_acl_is_allowed(#acl_is_allowed{action=insert, object=Cat}, Context) when is_atom(Cat) -> 
+observe_acl_is_allowed(#acl_is_allowed{action=insert, object=Cat}, Context) when is_atom(Cat) ->
     can_insert(Cat, Context);
 observe_acl_is_allowed(#acl_is_allowed{action=update, object=Id}, Context) ->
 	case m_rsc:p_no_acl(Id, is_authoritative, Context) of
@@ -84,11 +84,11 @@ observe_acl_can_see(#acl_can_see{}, #context{user_id=undefined}) ->
 	?ACL_VIS_PUBLIC;
 observe_acl_can_see(#acl_can_see{}, _Context) ->
 	?ACL_VIS_USER.
-	
+
 %% @doc Let the user log on, this is the moment to start caching information.
 observe_acl_logon(#acl_logon{id=UserId}, Context) ->
     logon(UserId, Context).
-	
+
 %% @doc Let the user log off, clean up any cached information.
 observe_acl_logoff(#acl_logoff{}, Context) ->
 	Context#context{acl=undefined, user_id=undefined}.
@@ -121,8 +121,8 @@ observe_acl_rsc_update_check(#acl_rsc_update_check{id=Id}, Props, Context) ->
                     _ ->
                         Props
                 end;
-    		Vis -> 
-    		    CurrVis = case Id of 
+    		Vis ->
+    		    CurrVis = case Id of
     		                insert_rsc -> ?ACL_VIS_USER;
     		                _ -> m_rsc:p_no_acl(Id, visible_for, Context)
     		              end,
@@ -149,16 +149,16 @@ observe_acl_rsc_update_check(#acl_rsc_update_check{id=Id}, Props, Context) ->
             #acl_user{visible_for=VisFor} -> VisFor;
             _ -> ?ACL_VIS_USER
         end.
-        
+
 
 
 %% @doc Check if the update contains information for a acl role.  If so then modify the acl role
 %% information so that it is easier to handle.
 %% @spec observe_rsc_update({rsc_update, ResourceId, OldResourceProps}, {Changed, UpdateProps}, Context) -> {NewChanged, NewUpdateProps}
 observe_rsc_update(#rsc_update{}, {Changed, Props}, _Context) ->
-    case       proplists:is_defined(acl_cat, Props) 
-        orelse proplists:is_defined(acl_mod, Props) 
-        orelse proplists:is_defined(acl_mime, Props) 
+    case       proplists:is_defined(acl_cat, Props)
+        orelse proplists:is_defined(acl_mod, Props)
+        orelse proplists:is_defined(acl_mime, Props)
         orelse proplists:is_defined(acl_view_all, Props)
         orelse proplists:is_defined(acl_file_upload_size, Props)
         orelse proplists:is_defined(acl_only_update_own, Props) of
@@ -174,15 +174,15 @@ observe_rsc_update(#rsc_update{}, {Changed, Props}, _Context) ->
             Cats1 = [ z_convert:to_atom(C) || C <- Cats, C /= <<>> ],
             Mods1 = [ z_convert:to_atom(M) || M <- Mods, M /= <<>> ],
             Mimes1 = [ z_convert:to_binary(M) || M <- Mimes, M /= <<>> ],
-            Props1 = proplists:delete(acl_cat, 
+            Props1 = proplists:delete(acl_cat,
                         proplists:delete(acl_mod,
                             proplists:delete(acl_file_upload_size,
                                 proplists:delete(acl_view_all,
                                     proplists:delete(acl_visible_for,
                                         proplists:delete(acl_only_update_own,
                                             proplists:delete(acl_mime, Props))))))),
-            Props2 = [{acl, [   {categories, Cats1}, 
-                                {modules, Mods1}, 
+            Props2 = [{acl, [   {categories, Cats1},
+                                {modules, Mods1},
                                 {view_all,ReadAll},
                                 {only_update_own, OnlyOwn},
                                 {file_upload_size, FileSize},
@@ -214,15 +214,15 @@ logon(UserId, Context) ->
 
 
     logon_roles(UserId, Roles, Context, ContextAdmin) ->
-        RolesFiltered = [ R || R <- Roles, 
+        RolesFiltered = [ R || R <- Roles,
                                 m_rsc:is_a(R, acl_role, ContextAdmin),
                                 m_rsc:p_no_acl(R, is_published, ContextAdmin) ],
         % Merge all role's categories and modules
         ACLs = [ m_rsc:p_no_acl(R, acl, ContextAdmin) || R <- RolesFiltered ],
-        {Cats, Mods, ViewAll, OnlyOwn, FileSize, FileMime, VisibleFor} 
+        {Cats, Mods, ViewAll, OnlyOwn, FileSize, FileMime, VisibleFor}
                 = combine(ACLs, [], [], false, undefined, 0, [], 3),
         Context#context{user_id=UserId,
-                        acl=#acl_user{categories=lists:flatten(Cats), 
+                        acl=#acl_user{categories=lists:flatten(Cats),
                                       modules=lists:flatten(Mods),
                                       roles=RolesFiltered,
                                       view_all=ViewAll,
@@ -267,7 +267,7 @@ can_view_all(#context{user_id=?ACL_ADMIN_USER_ID}) ->
 can_view_all(#context{acl=undefined}) ->
     undefined;
 can_view_all(#context{acl=Acl}) ->
-    case Acl#acl_user.view_all of 
+    case Acl#acl_user.view_all of
         true -> true;
         _ -> undefined
     end.
@@ -279,7 +279,7 @@ can_edit(_Id, #context{user_id=?ACL_ADMIN_USER_ID}) ->
 can_edit(_Id, #context{acl=undefined}) ->
     undefined;
 
-%% @doc A user can edit himself 
+%% @doc A user can edit himself
 can_edit(UserId, #context{user_id=UserId, acl=#acl_user{only_update_own=true}}) when UserId /= undefined ->
     true;
 %% @doc A user can edit content he created
@@ -295,7 +295,7 @@ can_edit(Id, #context{acl=Acl} = Context) ->
 
     can_edit1(undefined, _Allowed) -> undefined;
     can_edit1([], _Allowed) -> undefined;
-    can_edit1([{Cat,_}|Cats], Allowed) -> 
+    can_edit1([{Cat,_}|Cats], Allowed) ->
         case lists:member(Cat, Allowed) of
             true -> true;
             false -> can_edit1(Cats, Allowed)
@@ -323,13 +323,13 @@ can_insert(_Cat, #context{acl=undefined}) ->
     undefined;
 can_insert(Cat, #context{acl=Acl} = Context) ->
     case lists:member(Cat, Acl#acl_user.categories) of
-        true -> 
+        true ->
             true;
         false ->
             IsA = m_category:is_a(Cat, Context),
             can_insert1(IsA,  Acl#acl_user.categories)
     end.
-    
+
     can_insert1([], _Allowed) ->
         undefined;
     can_insert1([Cat|Cats], Allowed) ->
@@ -344,11 +344,11 @@ is_view_public(Id, Context) ->
 
 is_view_community(Id, Context) ->
     is_view_level(Id, 1, Context).
-    
+
 is_view_level(Id, Level, Context) ->
     Acl = m_rsc:get_acl_props(Id, Context),
     case Acl#acl_props.is_published of
-        false -> 
+        false ->
             false;
         true ->
             case Acl#acl_props.visible_for =< Level of
@@ -366,7 +366,7 @@ can_edge(_, #context{user_id=?ACL_ADMIN_USER_ID}) ->
     true;
 can_edge(#acl_edge{predicate=acl_role_member, subject_id=SubjectId, object_id=ObjectId}, Context) ->
     case can_insert(acl_role, Context) == true
-        andalso can_edit(SubjectId, Context) == true 
+        andalso can_edit(SubjectId, Context) == true
         andalso can_view(ObjectId, Context) == true of
         true -> true;
         false -> undefined
@@ -377,7 +377,7 @@ can_edge(#acl_edge{subject_id=SubjectId, object_id=ObjectId}, Context) ->
         true -> true;
         false -> undefined
     end.
-    
+
 
 can_media(Mime, Size, Context) when is_list(Mime) ->
     can_media(z_convert:to_binary(Mime), Size, Context);
@@ -400,7 +400,7 @@ can_media(Mime, Size, #context{acl=ACL}) ->
             end;
         _ -> undefined
     end.
-    
+
     make_wildcard(<<"text/html-video-embed">>) ->
         <<"video/*">>;
     make_wildcard(<<"text/html-oembed">>) ->
