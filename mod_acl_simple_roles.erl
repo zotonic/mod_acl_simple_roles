@@ -36,6 +36,7 @@
     observe_acl_logon/2,
     observe_acl_logoff/2,
     observe_acl_rsc_update_check/3,
+    observe_acl_add_sql_check/2,
     observe_rsc_update/3,
     observe_admin_menu/3
 ]).
@@ -149,7 +150,46 @@ observe_acl_rsc_update_check(#acl_rsc_update_check{id=Id}, Props, Context) ->
             #acl_user{visible_for=VisFor} -> VisFor;
             _ -> ?ACL_VIS_USER
         end.
-        
+
+
+%% @doc Restrict what an user can see in z_search SQL queries.
+observe_acl_add_sql_check(#acl_add_sql_check{alias=Alias, args=Args}, #context{ user_id = undefined }) ->
+    % Restrict anonymous users to published content with public visible_for level
+    {[
+          Alias, ".is_published = true and "
+        , Alias, ".publication_start <= now() and "
+        , Alias, ".publication_end >= now() and "
+        , Alias, ".visible_for = ", integer_to_list(?ACL_VIS_PUBLIC)
+    ], Args};
+observe_acl_add_sql_check(#acl_add_sql_check{args=Args}, #context{ acl = admin }) ->
+    % No restrictions for sudo users
+    {[], Args};
+observe_acl_add_sql_check(#acl_add_sql_check{alias=Alias, args=Args, search_sql=SearchSql}, #context{ user_id = UserId } = Context) ->
+    case can_module(use, mod_admin, Context) of
+        true ->
+            % No restrictions for admin users
+            {[], Args};
+        false ->
+            #search_sql{ extra = Extra } = SearchSql,
+            case lists:member(no_publish_check, Extra) of
+                true ->
+                    {[], Args};
+                false ->
+                    % Restrict to published content or content created by user
+                    {[
+                        "(",
+                            "(",
+                              Alias, ".is_published = true and "
+                            , Alias, ".publication_start <= now() and "
+                            , Alias, ".publication_end >= now()"
+                            ")",
+                            " or ", Alias, ".creator_id = ", integer_to_list(UserId),
+                            " or ", Alias, ".id = ", integer_to_list(UserId),
+                        ")"
+                    ], Args}
+            end
+    end.
+
 
 
 %% @doc Check if the update contains information for a acl role.  If so then modify the acl role
