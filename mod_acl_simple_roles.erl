@@ -164,6 +164,9 @@ observe_acl_add_sql_check(#acl_add_sql_check{alias=Alias, args=Args}, #context{ 
 observe_acl_add_sql_check(#acl_add_sql_check{args=Args}, #context{ acl = admin }) ->
     % No restrictions for sudo users
     {[], Args};
+observe_acl_add_sql_check(#acl_add_sql_check{args=Args}, #context{ acl = #acl_user{ view_all = true } }) ->
+    % No restrictions for 'view all' users
+    {[], Args};
 observe_acl_add_sql_check(#acl_add_sql_check{alias=Alias, args=Args, search_sql=SearchSql}, #context{ user_id = UserId } = Context) ->
     case can_module(use, mod_admin, Context) of
         true ->
@@ -175,11 +178,13 @@ observe_acl_add_sql_check(#acl_add_sql_check{alias=Alias, args=Args, search_sql=
                 true ->
                     {[], Args};
                 false ->
-                    % Restrict to published content or content created by user
+                    % Limit signed in users to community content or content
+                    % created by the user.
                     {[
                         "(",
-                            "(",
-                              Alias, ".is_published = true and "
+                            "("
+                            , Alias, ".visible_for = any(0,1,2) and "
+                            , Alias, ".is_published = true and "
                             , Alias, ".publication_start <= now() and "
                             , Alias, ".publication_end >= now()"
                             ")",
@@ -189,8 +194,6 @@ observe_acl_add_sql_check(#acl_add_sql_check{alias=Alias, args=Args, search_sql=
                     ], Args}
             end
     end.
-
-
 
 %% @doc Check if the update contains information for a acl role.  If so then modify the acl role
 %% information so that it is easier to handle.
