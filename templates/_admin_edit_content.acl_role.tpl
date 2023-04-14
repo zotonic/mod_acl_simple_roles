@@ -14,7 +14,7 @@
         <div class="form-group">
             <div class="checkbox">
                 <label>
-                    <input id="field-view-all" type="checkbox" class="do_fieldreplace" name="acl_view_all" {% if acl.view_all %}checked="checked"{% endif %} value="1" />
+                    <input id="field-view-all" type="checkbox" name="acl_view_all" {% if acl.view_all %}checked="checked"{% endif %} value="1" />
                         {_ All members are allowed to view all content.  (Check this for supervisors.) _}
                 </label>
             </div>
@@ -23,7 +23,7 @@
         <div class="form-group">
             <div class="checkbox">
                 <label>
-                    <input id="field-update-own" type="checkbox" class="do_fieldreplace" name="acl_only_update_own" {% if acl.only_update_own %}checked="checked"{% endif %} value="1" />
+                    <input id="field-update-own" type="checkbox" name="acl_only_update_own" {% if acl.only_update_own %}checked="checked"{% endif %} value="1" />
                         {_ Only allow to update content created by the user himself. (Check for user generated content sites.) _}
                 </label>
             </div>
