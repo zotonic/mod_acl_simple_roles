@@ -172,7 +172,7 @@ observe_acl_add_sql_check(#acl_add_sql_check{alias=Alias, args=Args, search_sql=
         true ->
             % No restrictions for admin users
             {[], Args};
-        false ->
+        _ ->
             #search_sql{ extra = Extra } = SearchSql,
             case lists:member(no_publish_check, Extra) of
                 true ->
@@ -183,7 +183,7 @@ observe_acl_add_sql_check(#acl_add_sql_check{alias=Alias, args=Args, search_sql=
                     {[
                         "(",
                             "("
-                            , Alias, ".visible_for = any(0,1,2) and "
+                            , Alias, ".visible_for = any(array[0,1,2]::int[]) and "
                             , Alias, ".is_published = true and "
                             , Alias, ".publication_start <= now() and "
                             , Alias, ".publication_end >= now()"
